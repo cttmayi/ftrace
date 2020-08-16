@@ -122,13 +122,13 @@ class Bus(FTraceComponent):
     def _bur_events_handler(self):
         """Handler function for bus update request events"""
         self._bur_intervals_by_dev = defaultdict(IntervalList)
-        for device, events in self._bur_events_by_dev.iteritems():
+        for device, events in self._bur_events_by_dev.items():
             last_event = None
             for bur_event in events:
                 try:
                     interval = \
                         Interval(last_event.timestamp if last_event else self._trace.interval.start, bur_event.timestamp)
-                except ValueError, e:
+                except ValueError as e:
                     raise e
                 state = \
                     BusState.BUSY if (bur_event.data.active or \

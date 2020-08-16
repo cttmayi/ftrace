@@ -161,7 +161,7 @@ class Ftrace(object):
         try:
             self.events = EventList(self._parse_lines())
             return True
-        except Exception, e:
+        except Exception as e:
             log.exception(e)
             return False
 
@@ -210,7 +210,7 @@ class Ftrace(object):
         Generator that yields ftrace lines in file.
         """
         yield_trace = False
-        with open(self.filepath, 'rU') as f:
+        with open(self.filepath, 'rU', encoding='utf8') as f:
             num_lines = os.fstat(f.fileno()).st_size
             while True:
                 line = f.readline().strip()
@@ -238,9 +238,9 @@ class Ftrace(object):
         rv = data
         try:
             rv = PARSERS[tracepoint](data)
-        except Exception, e:
+        except Exception as e:
             rv = PARSERS[tracepoint](data)
-        except ParserError, e:
+        except ParserError as e:
             log.exception(e)
             log.warn('Error parsing {tp} with {data}'.format(tp=tracepoint, data=data))
         finally:
@@ -277,7 +277,7 @@ class Ftrace(object):
 
     def _initiate_apis(self):
         """Start initialized all registered apis after parsing events in file"""
-        for name, cls in self._APIS.iteritems():
+        for name, cls in self._APIS.items():
             setattr(self, name, cls(self))
 
 def register_api(name):

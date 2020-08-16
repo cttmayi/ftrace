@@ -6,8 +6,10 @@ from pandas.tseries.offsets import Micro
 import ftrace
 from ftrace import Ftrace, Interval
 
+import argparse
 
-THERMAL_TIMELINE_RESOLUTION = '200L' # Resample to this Milliseconds
+
+THERMAL_TIMELINE_RESOLUTION = '200' # Resample to this Milliseconds
 
 
 LITTLE_CLUSTER_MASK = 0x0F
@@ -38,7 +40,14 @@ start = Timestamp('1/1/1970')
 
 if __name__ == '__main__':
 
-    trace = Ftrace(filepath, ['tsens_threshold_hit', 'tsens_read', 'tsens_threshold_clear', 'clock_set_rate'])
+    parser = argparse.ArgumentParser(description='Thermal analysis of HMP platforms!')
+
+    parser.add_argument('-f', '--file', dest='file',
+                        help='File (systrace/ftrace log) to parse')
+
+    args = parser.parse_args()
+
+    trace = Ftrace(args.file, ['tsens_threshold_hit', 'tsens_read', 'tsens_threshold_clear', 'clock_set_rate'])
 
     # duration
     total_duration = trace.duration
@@ -58,11 +67,13 @@ if __name__ == '__main__':
             try:
                 df_therm.loc[i_start:i_end, clk] = freq_event.frequency
             except KeyError:
-                print "Error logging " + str(freq_event)
+                print("Error logging " + str(freq_event))
                 df_therm[start + Micro(freq_event.interval.start*1e6):start + Micro(freq_event.interval.end*1e6), clk] = freq_event.frequency
         for clk_event in trace.clock.clock_intervals(clock=clk, state=ftrace.clock.ClockState.DISABLED, interval=None):
             df_therm.loc[start + Micro(clk_event.interval.start*1e6): start + Micro(clk_event.interval.end*1e6), clk] = 0
 
-    df_therm.sort(inplace=True)
+    df_therm.sort_index(inplace=True)
+    #print(df_therm)
     df_therm = df_therm.asfreq(THERMAL_TIMELINE_RESOLUTION, method='ffill').fillna(method='ffill').fillna(-1)
-    df_therm.to_csv(r'thermal_timeline.csv')
+    #df_therm.to_csv(r'thermal_timeline.csv')
+    print(df_therm)

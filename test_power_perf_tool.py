@@ -6,6 +6,7 @@ from ftrace import Ftrace, Interval
 from pandas import Series, DataFrame, MultiIndex, Timestamp
 from pandas.tseries.offsets import Micro
 
+import argparse
 
 LITTLE_CLUSTER_MASK = 0x0F
 BIG_CLUSTER_MASK = 0xF0
@@ -19,7 +20,7 @@ def sim_busy_all_clusters(trace):
     """
     Returns DataFrame of simultaneously busy cores irrespectively of cluster.
     """
-    data = {num_cores: trace.cpu.simultaneously_busy_time(num_cores, interval=None) for num_cores in xrange(len(ALL_CPUS)+1)}
+    data = {num_cores: trace.cpu.simultaneously_busy_time(num_cores, interval=None) for num_cores in range(len(ALL_CPUS)+1)}
     total_duration = trace.duration if not INTERVAL else INTERVAL.duration
     return Series(data=data.values(), index=data.keys(), name=trace.filename) / total_duration
 
@@ -27,7 +28,7 @@ def sim_busy_by_clusters(trace, cpus):
     """
     Returns Series of simultaneously busy cores per `cpus` in cluster.
     """
-    data = {num_cores: trace.cpu.simultaneously_busy_time(num_cores, cpus=list(cpus), interval=None) for num_cores in xrange(len(cpus)+1)}
+    data = {num_cores: trace.cpu.simultaneously_busy_time(num_cores, cpus=list(cpus), interval=None) for num_cores in range(len(cpus)+1)}
     total_duration = trace.duration if not INTERVAL else INTERVAL.duration
     return Series(data=data.values(), index=data.keys(), name=trace.filename) / total_duration
 
@@ -47,7 +48,7 @@ if __name__ == '__main__':
 
     # Multi-core usage
     sb_all = DataFrame(columns=ALL_CPUS)
-    arrays = [['BIG']*5 + ['LITTLE']*5, range(5) + range(5)]
+    arrays = [['BIG']*5 + ['LITTLE']*5, list(range(5)) + list(range(5))]
     multi_index = MultiIndex.from_tuples(list(zip(*arrays)), names=['cluster', 'num_cores'])
     sb_by_cluster = DataFrame(index=multi_index)
 
@@ -80,7 +81,7 @@ if __name__ == '__main__':
         busy_time = trace.cpu.busy_time(cpu=cpu, interval=None)
         if busy_time != 0.0:
             df_tasks['Exec Time %'] = df_tasks['Exec Time (s)'] / busy_time
-        df_tasks.sort(['Exec Time (s)'], inplace=True, ascending=False)
+        df_tasks.sort_values(by='Exec Time (s)', inplace=True, ascending=False)
         df_tasks.set_index('PID', inplace=True)
         df_tasks.to_csv(r'top_tasks_cpu{cpu}.csv'.format(cpu=cpu))
 
@@ -120,5 +121,5 @@ if __name__ == '__main__':
             df_clk.loc[clk, 'UNKNOWN'] = total_duration - df_clk.loc[clk].sum()
 
     df_clk = df_clk / total_duration
-    df_clk.sort(axis=1, inplace=True)
+    df_clk.sort_index(axis=1, inplace=True)
     df_clk.to_csv(r'clocks.csv')
