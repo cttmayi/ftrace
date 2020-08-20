@@ -64,7 +64,7 @@ class IntervalList(list):
     """
     List with objects with intervals, sorted and sliceable by interval.
     """
-    
+
     def __init__(self, iterable=None):
         self._intervals = []
         self._start_timestamps = []
